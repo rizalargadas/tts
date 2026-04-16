@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Speech - Microsoft Neural Voices</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0078d4;
+            --primary-hover: #106ebe;
+            --primary-light: #deecf9;
+            --bg: #f3f2f1;
+            --card-bg: #ffffff;
+            --text: #323130;
+            --text-muted: #605e5c;
+            --border: #edebe9;
+            --success: #107c10;
+            --danger: #d13438;
+            --warning: #ffb900;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .ms-badge {
+            background: linear-gradient(135deg, #0078d4, #00bcf2);
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 1.6px 3.6px rgba(0,0,0,0.132), 0 0.3px 0.9px rgba(0,0,0,0.108);
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .server-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .server-status.connected {
+            background: #dff6dd;
+            color: #107c10;
+        }
+
+        .server-status.disconnected {
+            background: #fde7e9;
+            color: #d13438;
+        }
+
+        .server-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .server-status.connected .dot {
+            animation: pulse 2s infinite;
+        }
+
+        .textarea-wrapper {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 180px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: var(--card-bg);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+
+        .char-count {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: var(--card-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .voice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .control-group label span {
+            font-weight: 400;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        select {
+            padding: 0.6rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: var(--card-bg);
+            cursor: pointer;
+        }
+
+        select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+        }
+
+        .voice-categories {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .category-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .category-btn:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .category-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .voice-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg);
+            border-radius: 4px;
+            margin-top: 0.75rem;
+        }
+
+        .voice-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #00bcf2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .voice-details h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.1rem;
+        }
+
+        .voice-details p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        button svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: #f3f2f1;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e1dfdd;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #0b5a0b;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            background: var(--primary-light);
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+
+        .status-bar.speaking {
+            background: #dff6dd;
+        }
+
+        .status-bar.loading {
+            background: #fff4ce;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--warning);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 1s infinite;
+        }
+
+        .status-text {
+            font-weight: 500;
+            font-size: 0.875rem;
+            flex: 1;
+        }
+
+        .samples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .sample-btn {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            text-align: left;
+        }
+
+        .sample-btn:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .error-message {
+            background: #fde7e9;
+            border: 1px solid #f1bbbc;
+            color: var(--danger);
+            padding: 0.875rem 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .audio-player-wrapper {
+            margin-top: 1rem;
+        }
+
+        .audio-player-wrapper audio {
+            width: 100%;
+            border-radius: 4px;
+        }
+
+        .voice-count {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        /* Batch Queue Styles */
+        .queue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .queue-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .queue-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .queue-controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-sm:hover:not(:disabled) {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .btn-sm.btn-sm-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-sm.btn-sm-primary:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        .btn-sm.btn-sm-success {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .btn-sm.btn-sm-success:hover:not(:disabled) {
+            background: #0b5a0b;
+        }
+
+        .btn-sm:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .concurrency-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .concurrency-control select {
+            padding: 0.3rem 0.5rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+        }
+
+        .queue-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .queue-empty {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--border);
+            transition: border-color 0.2s;
+        }
+
+        .queue-item.processing {
+            border-left-color: var(--warning);
+            background: #fff4ce20;
+        }
+
+        .queue-item.done {
+            border-left-color: var(--success);
+            background: #dff6dd40;
+        }
+
+        .queue-item.error {
+            border-left-color: var(--danger);
+            background: #fde7e920;
+        }
+
+        .queue-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .queue-item-text {
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .queue-item-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+
+        .queue-status {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .queue-status.pending {
+            background: var(--bg);
+            color: var(--text-muted);
+        }
+
+        .queue-status.processing {
+            background: #fff4ce;
+            color: #8a6d00;
+        }
+
+        .queue-status.done {
+            background: #dff6dd;
+            color: var(--success);
+        }
+
+        .queue-status.error {
+            background: #fde7e9;
+            color: var(--danger);
+        }
+
+        .mini-spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #8a6d00;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .queue-item-actions {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .queue-action-btn {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            font-size: 0.85rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            color: var(--text);
+        }
+
+        .queue-action-btn:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .queue-progress {
+            margin-top: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .queue-progress-bar {
+            flex: 1;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .queue-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            header h1 { font-size: 1.5rem; flex-direction: column; gap: 0.5rem; }
+            .card { padding: 1rem; }
+            .voice-grid { grid-template-columns: 1fr; }
+            .button-row { flex-direction: column; }
+            button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                Text to Speech
+                <span class="ms-badge">Microsoft Neural Voices</span>
+            </h1>
+            <p>Free, unlimited, high-quality AI voices via Edge TTS</p>
+        </header>
+
+        <div class="server-status disconnected" id="serverStatus">
+            <span class="dot"></span>
+            <span id="serverStatusText">Checking server connection...</span>
+        </div>
+
+        <div class="card">
+            <div class="textarea-wrapper">
+                <textarea id="textInput" placeholder="Enter text to convert to speech... Paste long texts like novels — they'll be auto-split into batches.">Hello! This is a demonstration of Microsoft's neural text-to-speech technology. These voices sound incredibly natural and support multiple languages, accents, and speaking styles. The best part? It's completely free with no API key required!</textarea>
+                <div class="char-count"><span id="charCount">0 chars</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                Voice Selection
+                <span class="voice-count" id="voiceCount">Loading...</span>
+            </div>
+
+            <div class="voice-categories" id="voiceCategories">
+                <button class="category-btn active" data-lang="en">English</button>
+                <button class="category-btn" data-lang="es">Spanish</button>
+                <button class="category-btn" data-lang="fr">French</button>
+                <button class="category-btn" data-lang="de">German</button>
+                <button class="category-btn" data-lang="it">Italian</button>
+                <button class="category-btn" data-lang="pt">Portuguese</button>
+                <button class="category-btn" data-lang="zh">Chinese</button>
+                <button class="category-btn" data-lang="ja">Japanese</button>
+                <button class="category-btn" data-lang="ko">Korean</button>
+                <button class="category-btn" data-lang="ar">Arabic</button>
+                <button class="category-btn" data-lang="hi">Hindi</button>
+                <button class="category-btn" data-lang="ru">Russian</button>
+                <button class="category-btn" data-lang="all">All</button>
+            </div>
+
+            <div class="voice-grid">
+                <div class="control-group">
+                    <label for="voiceSelect">Voice</label>
+                    <select id="voiceSelect">
+                        <option>Loading voices...</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="rateRange">Speed <span id="rateValue">+0%</span></label>
+                    <input type="range" id="rateRange" min="-50" max="100" step="10" value="0">
+                </div>
+
+                <div class="control-group">
+                    <label for="pitchRange">Pitch <span id="pitchValue">-10Hz</span></label>
+                    <input type="range" id="pitchRange" min="-50" max="50" step="5" value="-10">
+                </div>
+            </div>
+
+            <div class="voice-info">
+                <div class="voice-avatar" id="voiceAvatar">?</div>
+                <div class="voice-details">
+                    <h4 id="voiceName">Select a voice</h4>
+                    <p id="voiceLocale">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">Quick Samples</div>
+            <div class="samples-grid">
+                <button class="sample-btn" data-text="Hello, how are you today?">Greeting</button>
+                <button class="sample-btn" data-text="The quick brown fox jumps over the lazy dog.">Pangram</button>
+                <button class="sample-btn" data-text="Welcome to our presentation. Today we'll be discussing the future of artificial intelligence and its impact on society.">Presentation</button>
+                <button class="sample-btn" data-text="Breaking news: Scientists have made a groundbreaking discovery that could change everything we know about the universe.">News</button>
+                <button class="sample-btn" data-text="Once upon a time, in a land far away, there lived a brave young hero who dreamed of adventure and glory.">Storytelling</button>
+                <button class="sample-btn" data-text="Please leave your message after the tone, and I'll get back to you as soon as possible. Thank you for calling!">Voicemail</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="control-group" style="margin-bottom: 1rem;">
+                <label for="filenameInput">Filename</label>
+                <input type="text" id="filenameInput" placeholder="e.g. Where The Light Gathers" style="padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.95rem; font-family: inherit; background: var(--card-bg); width: 100%;">
+            </div>
+            <div class="button-row">
+                <button class="btn-primary" id="speakBtn" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Generate Speech
+                </button>
+                <button class="btn-secondary" id="stopBtn" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="6" y="6" width="12" height="12"></rect>
+                    </svg>
+                    Stop
+                </button>
+                <button class="btn-success" id="downloadBtn" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download MP3
+                </button>
+                <button class="btn-secondary" id="addToQueueBtn" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add to Queue
+                </button>
+            </div>
+
+            <div class="status-bar" id="statusBar" style="display: none;">
+                <div class="spinner" id="spinner"></div>
+                <div class="status-indicator" id="statusIndicator" style="display: none;"></div>
+                <span class="status-text" id="statusText">Processing...</span>
+            </div>
+
+            <div class="audio-player-wrapper" id="audioWrapper" style="display: none;">
+                <audio id="audioPlayer" controls></audio>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+
+        <div class="card" id="queueCard">
+            <div class="queue-header">
+                <div class="queue-header-left">
+                    <div class="section-title" style="margin-bottom: 0;">Batch Queue</div>
+                    <span class="queue-badge" id="queueCount">0 items</span>
+                </div>
+                <div class="queue-controls">
+                    <div class="concurrency-control">
+                        Parallel:
+                        <select id="concurrencySelect">
+                            <option value="2">2</option>
+                            <option value="3" selected>3</option>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <button class="btn-sm btn-sm-primary" id="processAllBtn" disabled>Process All</button>
+                    <button class="btn-sm btn-sm-success" id="downloadAllBtn" disabled style="display:none;">Download All</button>
+                    <button class="btn-sm btn-sm-success" id="downloadZipBtn" disabled style="display:none;">Download ZIP</button>
+                    <button class="btn-sm" id="clearQueueBtn" disabled>Clear</button>
+                </div>
+            </div>
+            <div class="queue-list" id="queueList">
+                <div class="queue-empty">Queue is empty. Add items using the "Add to Queue" button above.</div>
+            </div>
+            <div class="queue-progress" id="queueProgress" style="display:none;">
+                <div class="queue-progress-bar"><div class="queue-progress-fill" id="queueProgressFill" style="width:0%"></div></div>
+                <span id="queueProgressText">0 / 0</span>
+            </div>
+        </div>
+
+        <footer>
+            <p>Powered by edge-tts - Microsoft's neural voices, free and unlimited</p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        const API_BASE = 'http://localhost:5000';
+
+        // Elements
+        const serverStatus = document.getElementById('serverStatus');
+        const serverStatusText = document.getElementById('serverStatusText');
+        const textInput = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const voiceCount = document.getElementById('voiceCount');
+        const rateRange = document.getElementById('rateRange');
+        const rateValue = document.getElementById('rateValue');
+        const pitchRange = document.getElementById('pitchRange');
+        const pitchValue = document.getElementById('pitchValue');
+        const speakBtn = document.getElementById('speakBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const statusBar = document.getElementById('statusBar');
+        const statusText = document.getElementById('statusText');
+        const spinner = document.getElementById('spinner');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const errorMessage = document.getElementById('errorMessage');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const audioWrapper = document.getElementById('audioWrapper');
+        const voiceAvatar = document.getElementById('voiceAvatar');
+        const voiceName = document.getElementById('voiceName');
+        const voiceLocale = document.getElementById('voiceLocale');
+        const voiceCategories = document.getElementById('voiceCategories');
+
+        // State
+        let voices = [];
+        let currentLang = 'en';
+        let currentAudioUrl = null;
+        let serverConnected = false;
+
+        // Settings persistence
+        const SETTINGS_KEY = 'tts-settings';
+        const DEFAULT_SETTINGS = {
+            voice: 'en-US-MichelleNeural',
+            rate: 0,
+            pitch: -10,
+            lang: 'en',
+            concurrency: 3
+        };
+
+        function saveSettings() {
+            const settings = {
+                voice: voiceSelect.value,
+                rate: parseInt(rateRange.value),
+                pitch: parseInt(pitchRange.value),
+                lang: currentLang,
+                concurrency: parseInt(concurrencySelect.value)
+            };
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            try {
+                const saved = localStorage.getItem(SETTINGS_KEY);
+                return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS;
+            } catch {
+                return DEFAULT_SETTINGS;
+            }
+        }
+
+        function applySettings(settings) {
+            // Apply rate
+            rateRange.value = settings.rate;
+            const rateVal = settings.rate;
+            rateValue.textContent = rateVal >= 0 ? `+${rateVal}%` : `${rateVal}%`;
+
+            // Apply pitch
+            pitchRange.value = settings.pitch;
+            const pitchVal = settings.pitch;
+            pitchValue.textContent = pitchVal >= 0 ? `+${pitchVal}Hz` : `${pitchVal}Hz`;
+
+            // Apply concurrency
+            concurrencySelect.value = settings.concurrency;
+
+            // Apply language category
+            currentLang = settings.lang;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === currentLang);
+            });
+        }
+
+        function applyVoiceSetting(settings) {
+            // Try to select the saved voice
+            const options = Array.from(voiceSelect.options);
+            const match = options.find(o => o.value === settings.voice);
+            if (match) {
+                voiceSelect.value = settings.voice;
+            }
+            updateVoiceInfo();
+        }
+
+        // Initialize
+        async function init() {
+            updateCharCount();
+            const settings = loadSettings();
+            applySettings(settings);
+            await checkServerAndLoadVoices(settings);
+        }
+
+        // Check server connection and load voices
+        async function checkServerAndLoadVoices(settings) {
+            settings = settings || loadSettings();
+            try {
+                const response = await fetch(`${API_BASE}/api/voices`);
+                if (response.ok) {
+                    voices = await response.json();
+                    serverConnected = true;
+                    serverStatus.className = 'server-status connected';
+                    serverStatusText.textContent = `Server connected - ${voices.length} voices available`;
+                    voiceCount.textContent = `${voices.length} voices`;
+                    speakBtn.disabled = false;
+                    addToQueueBtn.disabled = false;
+                    populateVoices(currentLang);
+                    applyVoiceSetting(settings);
+                } else {
+                    throw new Error('Server not responding');
+                }
+            } catch (error) {
+                serverConnected = false;
+                serverStatus.className = 'server-status disconnected';
+                serverStatusText.textContent = 'Server not running. Start with: python server.py';
+                voiceCount.textContent = 'Offline';
+                speakBtn.disabled = true;
+            }
+        }
+
+        // Populate voices dropdown
+        function populateVoices(lang) {
+            voiceSelect.innerHTML = '';
+
+            let filteredVoices = voices;
+            if (lang !== 'all') {
+                filteredVoices = voices.filter(v => v.Locale.toLowerCase().startsWith(lang));
+            }
+
+            // Group by locale
+            const grouped = {};
+            filteredVoices.forEach(voice => {
+                const locale = voice.Locale;
+                if (!grouped[locale]) grouped[locale] = [];
+                grouped[locale].push(voice);
+            });
+
+            // Sort and populate
+            Object.keys(grouped).sort().forEach(locale => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = `${locale} (${grouped[locale].length})`;
+
+                grouped[locale].sort((a, b) => a.ShortName.localeCompare(b.ShortName)).forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.ShortName;
+                    const name = voice.ShortName.split('-').pop().replace('Neural', '');
+                    option.textContent = `${name} (${voice.Gender})`;
+                    optgroup.appendChild(option);
+                });
+
+                voiceSelect.appendChild(optgroup);
+            });
+
+            updateVoiceInfo();
+        }
+
+        // Update voice info display
+        function updateVoiceInfo() {
+            const voice = voices.find(v => v.ShortName === voiceSelect.value);
+            if (voice) {
+                const name = voice.ShortName.split('-').pop().replace('Neural', '');
+                voiceAvatar.textContent = name[0];
+                voiceName.textContent = name;
+                voiceLocale.textContent = `${voice.Locale} • ${voice.Gender} • Neural`;
+            }
+        }
+
+        // Character count
+        let charCountTimer = null;
+        function updateCharCount() {
+            const len = textInput.value.length;
+            if (len <= BATCH_MAX_CHARS) {
+                charCount.textContent = len.toLocaleString() + ' chars';
+                return;
+            }
+            // Debounce the batch count calculation for large texts
+            charCount.textContent = len.toLocaleString() + ' chars';
+            clearTimeout(charCountTimer);
+            charCountTimer = setTimeout(() => {
+                const batchCount = splitTextIntoBatches(textInput.value).length;
+                charCount.textContent = len.toLocaleString() + ' chars' + (batchCount > 1 ? ` (${batchCount} batches)` : '');
+            }, 300);
+        }
+        textInput.addEventListener('input', updateCharCount);
+        voiceSelect.addEventListener('change', () => {
+            updateVoiceInfo();
+            saveSettings();
+        });
+
+        // Range inputs
+        rateRange.addEventListener('input', () => {
+            const val = parseInt(rateRange.value);
+            rateValue.textContent = val >= 0 ? `+${val}%` : `${val}%`;
+            saveSettings();
+        });
+
+        pitchRange.addEventListener('input', () => {
+            const val = parseInt(pitchRange.value);
+            pitchValue.textContent = val >= 0 ? `+${val}Hz` : `${val}Hz`;
+            saveSettings();
+        });
+
+        // Voice categories
+        voiceCategories.addEventListener('click', (e) => {
+            if (e.target.classList.contains('category-btn')) {
+                document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                currentLang = e.target.dataset.lang;
+                populateVoices(currentLang);
+                saveSettings();
+            }
+        });
+
+        // Sample buttons
+        document.querySelectorAll('.sample-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                textInput.value = btn.dataset.text;
+                updateCharCount();
+            });
+        });
+
+        // Generate speech
+        async function generateSpeech() {
+            const text = textInput.value.trim();
+            if (!text) {
+                showError('Please enter some text.');
+                return;
+            }
+
+            if (!serverConnected) {
+                showError('Server not connected. Run: python server.py');
+                return;
+            }
+
+            if (text.length > BATCH_MAX_CHARS) {
+                showError(`Text too long for single generation (${text.length.toLocaleString()} chars). Use "Add to Queue" to auto-split into batches.`);
+                return;
+            }
+
+            updateUI('loading');
+            hideError();
+
+            const rate = `${rateRange.value >= 0 ? '+' : ''}${rateRange.value}%`;
+            const pitch = `${pitchRange.value >= 0 ? '+' : ''}${pitchRange.value}Hz`;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/tts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: voiceSelect.value,
+                        rate: rate,
+                        pitch: pitch
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to generate speech');
+                }
+
+                const blob = await response.blob();
+                playAudio(blob);
+
+            } catch (error) {
+                showError(error.message);
+                updateUI('idle');
+            }
+        }
+
+        // Play audio
+        function playAudio(blob) {
+            if (currentAudioUrl) {
+                URL.revokeObjectURL(currentAudioUrl);
+            }
+
+            currentAudioUrl = URL.createObjectURL(blob);
+            audioPlayer.src = currentAudioUrl;
+            audioWrapper.style.display = 'block';
+            audioPlayer.play();
+
+            updateUI('speaking');
+            downloadBtn.disabled = false;
+
+            audioPlayer.onended = () => updateUI('idle');
+            audioPlayer.onerror = () => {
+                showError('Failed to play audio.');
+                updateUI('idle');
+            };
+        }
+
+        // UI state
+        function updateUI(state) {
+            statusBar.style.display = 'flex';
+
+            switch (state) {
+                case 'loading':
+                    spinner.style.display = 'block';
+                    statusIndicator.style.display = 'none';
+                    statusText.textContent = 'Generating speech...';
+                    statusBar.className = 'status-bar loading';
+                    speakBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    downloadBtn.disabled = true;
+                    break;
+                case 'speaking':
+                    spinner.style.display = 'none';
+                    statusIndicator.style.display = 'block';
+                    statusText.textContent = 'Playing audio...';
+                    statusBar.className = 'status-bar speaking';
+                    speakBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    break;
+                case 'idle':
+                default:
+                    statusBar.style.display = 'none';
+                    speakBtn.disabled = !serverConnected;
+                    stopBtn.disabled = true;
+                    break;
+            }
+        }
+
+        // Error handling
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('show');
+        }
+
+        // Event listeners
+        speakBtn.addEventListener('click', generateSpeech);
+
+        stopBtn.addEventListener('click', () => {
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+            updateUI('idle');
+        });
+
+        const filenameInput = document.getElementById('filenameInput');
+
+        function getFilename(batchLabel) {
+            const custom = filenameInput.value.trim();
+            let name;
+            if (custom) {
+                name = custom.replace(/[<>:"/\\|?*]/g, '').trim();
+            } else {
+                const firstLine = textInput.value.split(/\r?\n/)[0].trim();
+                name = firstLine.replace(/[^a-zA-Z0-9 _-]/g, '').trim().replace(/\s+/g, '_').substring(0, 100) || 'speech';
+            }
+            if (batchLabel) {
+                // "Part 1/5" -> "Part 1 of 5" for filesystem safety
+                const safeBatchLabel = batchLabel.replace('/', ' of ');
+                name += ` ${safeBatchLabel}`;
+            }
+            return `${name}.mp3`;
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            if (currentAudioUrl) {
+                const a = document.createElement('a');
+                a.href = currentAudioUrl;
+                a.download = getFilename();
+                a.click();
+            }
+        });
+
+        // Keyboard shortcut
+        textInput.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                generateSpeech();
+            }
+        });
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+            queue.forEach(item => {
+                if (item.audioUrl) URL.revokeObjectURL(item.audioUrl);
+            });
+        });
+
+        // ==================== Batch Queue ====================
+        const addToQueueBtn = document.getElementById('addToQueueBtn');
+        const processAllBtn = document.getElementById('processAllBtn');
+        const clearQueueBtn = document.getElementById('clearQueueBtn');
+        const downloadAllBtn = document.getElementById('downloadAllBtn');
+        const downloadZipBtn = document.getElementById('downloadZipBtn');
+        const queueList = document.getElementById('queueList');
+        const queueCountEl = document.getElementById('queueCount');
+        const concurrencySelect = document.getElementById('concurrencySelect');
+        const queueProgress = document.getElementById('queueProgress');
+        const queueProgressFill = document.getElementById('queueProgressFill');
+        const queueProgressText = document.getElementById('queueProgressText');
+
+        let queue = [];
+        let queueIdCounter = 0;
+        let isProcessingQueue = false;
+
+        const BATCH_MAX_CHARS = 50000;
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function splitTextIntoBatches(text, maxSize = BATCH_MAX_CHARS) {
+            text = text.trim();
+            if (text.length <= maxSize) return [text];
+
+            const batches = [];
+
+            // Split into paragraphs first (preserve structure)
+            const paragraphs = text.split(/\n\s*\n/);
+            let current = '';
+
+            for (const para of paragraphs) {
+                const separator = current ? '\n\n' : '';
+
+                if (current.length + separator.length + para.length <= maxSize) {
+                    current += separator + para;
+                } else if (para.length <= maxSize && current) {
+                    // Current batch is full, start new one
+                    batches.push(current.trim());
+                    current = para;
+                } else if (!current && para.length <= maxSize) {
+                    current = para;
+                } else {
+                    // Paragraph itself is too long, split by sentences
+                    if (current) {
+                        batches.push(current.trim());
+                        current = '';
+                    }
+                    const sentenceChunks = splitBySentences(para, maxSize);
+                    // Add all but last as complete batches
+                    for (let i = 0; i < sentenceChunks.length - 1; i++) {
+                        batches.push(sentenceChunks[i].trim());
+                    }
+                    current = sentenceChunks[sentenceChunks.length - 1];
+                }
+            }
+
+            if (current.trim()) {
+                batches.push(current.trim());
+            }
+
+            return batches;
+        }
+
+        function splitBySentences(text, maxSize) {
+            const sentences = text.split(/(?<=[.!?;:。！？])\s+/);
+            const chunks = [];
+            let current = '';
+
+            for (const sentence of sentences) {
+                if (current.length + sentence.length + 1 <= maxSize) {
+                    current += (current ? ' ' : '') + sentence;
+                } else if (current) {
+                    chunks.push(current);
+                    // If single sentence is too long, split by words
+                    if (sentence.length > maxSize) {
+                        const wordChunks = splitByWords(sentence, maxSize);
+                        for (let i = 0; i < wordChunks.length - 1; i++) {
+                            chunks.push(wordChunks[i]);
+                        }
+                        current = wordChunks[wordChunks.length - 1];
+                    } else {
+                        current = sentence;
+                    }
+                } else {
+                    // First sentence and it's too long
+                    const wordChunks = splitByWords(sentence, maxSize);
+                    for (let i = 0; i < wordChunks.length - 1; i++) {
+                        chunks.push(wordChunks[i]);
+                    }
+                    current = wordChunks[wordChunks.length - 1];
+                }
+            }
+
+            if (current) chunks.push(current);
+            return chunks;
+        }
+
+        function splitByWords(text, maxSize) {
+            const words = text.split(/(\s+)/);
+            const chunks = [];
+            let current = '';
+
+            for (const word of words) {
+                if (current.length + word.length <= maxSize) {
+                    current += word;
+                } else if (current) {
+                    chunks.push(current.trimEnd());
+                    current = word.trimStart();
+                } else {
+                    // Single word longer than maxSize (extremely unlikely)
+                    chunks.push(word);
+                }
+            }
+
+            if (current.trim()) chunks.push(current.trim());
+            return chunks;
+        }
+
+        function addToQueue() {
+            const text = textInput.value.trim();
+            if (!text) {
+                showError('Please enter some text to add to the queue.');
+                return;
+            }
+            if (!serverConnected) {
+                showError('Server not connected.');
+                return;
+            }
+
+            const rate = `${rateRange.value >= 0 ? '+' : ''}${rateRange.value}%`;
+            const pitch = `${pitchRange.value >= 0 ? '+' : ''}${pitchRange.value}Hz`;
+            const batches = splitTextIntoBatches(text);
+
+            batches.forEach((batchText, i) => {
+                queue.push({
+                    id: ++queueIdCounter,
+                    text: batchText,
+                    voice: voiceSelect.value,
+                    rate: rate,
+                    pitch: pitch,
+                    status: 'pending',
+                    audioBlob: null,
+                    audioUrl: null,
+                    error: null,
+                    batchLabel: batches.length > 1 ? `Part ${i + 1}/${batches.length}` : null
+                });
+            });
+
+            if (batches.length > 1) {
+                statusBar.style.display = 'flex';
+                spinner.style.display = 'none';
+                statusIndicator.style.display = 'none';
+                statusBar.className = 'status-bar';
+                statusText.textContent = `Text split into ${batches.length} batches and added to queue.`;
+                setTimeout(() => { if (!isProcessingQueue) statusBar.style.display = 'none'; }, 4000);
+            }
+
+            hideError();
+            renderQueue();
+        }
+
+        function removeFromQueue(id) {
+            const item = queue.find(q => q.id === id);
+            if (item && item.audioUrl) URL.revokeObjectURL(item.audioUrl);
+            queue = queue.filter(q => q.id !== id);
+            renderQueue();
+        }
+
+        function clearQueue() {
+            if (isProcessingQueue) return;
+            queue.forEach(item => {
+                if (item.audioUrl) URL.revokeObjectURL(item.audioUrl);
+            });
+            queue = [];
+            renderQueue();
+        }
+
+        async function retryQueueItem(id) {
+            const item = queue.find(q => q.id === id);
+            if (!item || item.status !== 'error') return;
+            item.status = 'pending';
+            item.error = null;
+            renderQueue();
+            // Process just this one item
+            await processQueueItem(item);
+        }
+
+        function playQueueItem(id) {
+            const item = queue.find(q => q.id === id);
+            if (item && item.audioUrl) {
+                audioPlayer.src = item.audioUrl;
+                audioWrapper.style.display = 'block';
+                audioPlayer.play();
+            }
+        }
+
+        function downloadQueueItem(id) {
+            const item = queue.find(q => q.id === id);
+            if (item && item.audioUrl) {
+                const a = document.createElement('a');
+                a.href = item.audioUrl;
+                a.download = getFilename(item.batchLabel);
+                a.click();
+            }
+        }
+
+        function downloadAllCompleted() {
+            const done = queue.filter(q => q.status === 'done');
+            done.forEach((item, i) => {
+                setTimeout(() => downloadQueueItem(item.id), i * 300);
+            });
+        }
+
+        async function downloadAsZip() {
+            const done = queue.filter(q => q.status === 'done');
+            if (done.length === 0) return;
+
+            downloadZipBtn.disabled = true;
+            downloadZipBtn.textContent = 'Zipping...';
+
+            try {
+                const zip = new JSZip();
+                for (const item of done) {
+                    const response = await fetch(item.audioUrl);
+                    const blob = await response.blob();
+                    zip.file(getFilename(item.batchLabel), blob);
+                }
+
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                const custom = filenameInput.value.trim().replace(/[<>:"/\\|?*]/g, '').trim();
+                const zipName = (custom || 'speech') + '.zip';
+
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(zipBlob);
+                a.download = zipName;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            } catch (e) {
+                showError('Failed to create ZIP: ' + e.message);
+            }
+
+            downloadZipBtn.disabled = false;
+            downloadZipBtn.textContent = 'Download ZIP';
+        }
+
+        async function processQueue() {
+            const pending = queue.filter(q => q.status === 'pending');
+            if (pending.length === 0 || isProcessingQueue) return;
+
+            isProcessingQueue = true;
+            renderQueue();
+
+            const maxConcurrency = parseInt(concurrencySelect.value);
+            let running = 0;
+            let completed = 0;
+            const total = pending.length;
+            let idx = 0;
+
+            queueProgress.style.display = 'flex';
+            updateProgress(0, total);
+
+            await new Promise(resolve => {
+                function startNext() {
+                    while (running < maxConcurrency && idx < pending.length) {
+                        const item = pending[idx++];
+                        running++;
+                        processQueueItem(item).then(() => {
+                            running--;
+                            completed++;
+                            updateProgress(completed, total);
+                            if (completed === total) {
+                                resolve();
+                            } else {
+                                startNext();
+                            }
+                        });
+                    }
+                }
+                startNext();
+            });
+
+            isProcessingQueue = false;
+            renderQueue();
+        }
+
+        async function processQueueItem(item) {
+            item.status = 'processing';
+            renderQueue();
+
+            try {
+                const response = await fetch(`${API_BASE}/api/tts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: item.text,
+                        voice: item.voice,
+                        rate: item.rate,
+                        pitch: item.pitch
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to generate speech');
+                }
+
+                item.audioBlob = await response.blob();
+                item.audioUrl = URL.createObjectURL(item.audioBlob);
+                item.status = 'done';
+            } catch (e) {
+                item.status = 'error';
+                item.error = e.message;
+            }
+
+            renderQueue();
+        }
+
+        function updateProgress(done, total) {
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            queueProgressFill.style.width = pct + '%';
+            queueProgressText.textContent = `${done} / ${total}`;
+        }
+
+        function renderQueue() {
+            const pendingCount = queue.filter(q => q.status === 'pending').length;
+            const processingCount = queue.filter(q => q.status === 'processing').length;
+            const doneCount = queue.filter(q => q.status === 'done').length;
+
+            queueCountEl.textContent = `${queue.length} item${queue.length !== 1 ? 's' : ''}`;
+            processAllBtn.disabled = pendingCount === 0 || isProcessingQueue;
+            clearQueueBtn.disabled = queue.length === 0 || isProcessingQueue;
+            downloadAllBtn.disabled = doneCount === 0;
+            downloadAllBtn.style.display = doneCount > 0 ? 'inline-flex' : 'none';
+            downloadZipBtn.disabled = doneCount === 0;
+            downloadZipBtn.style.display = doneCount > 0 ? 'inline-flex' : 'none';
+
+            if (!isProcessingQueue && processingCount === 0) {
+                queueProgress.style.display = 'none';
+            }
+
+            if (queue.length === 0) {
+                queueList.innerHTML = '<div class="queue-empty">Queue is empty. Add items using the "Add to Queue" button above.</div>';
+                return;
+            }
+
+            queueList.innerHTML = queue.map(item => {
+                const preview = item.text.substring(0, 80) + (item.text.length > 80 ? '...' : '');
+                const voiceName = item.voice.split('-').pop().replace('Neural', '');
+
+                let statusHtml = '';
+                let actionsHtml = '';
+
+                switch (item.status) {
+                    case 'pending':
+                        statusHtml = '<span class="queue-status pending">Pending</span>';
+                        actionsHtml = `<button class="queue-action-btn" onclick="removeFromQueue(${item.id})" title="Remove">&times;</button>`;
+                        break;
+                    case 'processing':
+                        statusHtml = '<span class="queue-status processing"><span class="mini-spinner"></span> Processing</span>';
+                        break;
+                    case 'done':
+                        statusHtml = '<span class="queue-status done">Done</span>';
+                        actionsHtml = `
+                            <button class="queue-action-btn" onclick="playQueueItem(${item.id})" title="Play">&#9654;</button>
+                            <button class="queue-action-btn" onclick="downloadQueueItem(${item.id})" title="Download">&#8595;</button>
+                            <button class="queue-action-btn" onclick="removeFromQueue(${item.id})" title="Remove">&times;</button>
+                        `;
+                        break;
+                    case 'error':
+                        statusHtml = `<span class="queue-status error">Error</span>`;
+                        actionsHtml = `
+                            <button class="queue-action-btn" onclick="retryQueueItem(${item.id})" title="Retry">&#8635;</button>
+                            <button class="queue-action-btn" onclick="removeFromQueue(${item.id})" title="Remove">&times;</button>
+                        `;
+                        break;
+                }
+
+                const errorHtml = item.status === 'error' && item.error
+                    ? `<div style="font-size:0.75rem;color:var(--danger);margin-top:0.2rem;">${escapeHtml(item.error)}</div>`
+                    : '';
+
+                return `
+                    <div class="queue-item ${item.status}">
+                        <div class="queue-item-info">
+                            <div class="queue-item-text">${escapeHtml(preview)}</div>
+                            <div class="queue-item-meta">${item.batchLabel ? `<strong>${escapeHtml(item.batchLabel)}</strong> &middot; ` : ''}${escapeHtml(voiceName)} &middot; ${item.text.length.toLocaleString()} chars</div>
+                            ${errorHtml}
+                        </div>
+                        ${statusHtml}
+                        <div class="queue-item-actions">${actionsHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        addToQueueBtn.addEventListener('click', addToQueue);
+        processAllBtn.addEventListener('click', processQueue);
+        clearQueueBtn.addEventListener('click', clearQueue);
+        downloadAllBtn.addEventListener('click', downloadAllCompleted);
+        downloadZipBtn.addEventListener('click', downloadAsZip);
+        concurrencySelect.addEventListener('change', saveSettings);
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
