@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text to Speech - Microsoft Neural Voices</title>
+    <title>Text to Speech - Kokoro Neural Voices</title>
     <style>
         * {
             margin: 0;
@@ -705,9 +705,9 @@
         <header>
             <h1>
                 Text to Speech
-                <span class="ms-badge">Microsoft Neural Voices</span>
+                <span class="ms-badge">Kokoro Neural Voices</span>
             </h1>
-            <p>Free, unlimited, high-quality AI voices via Edge TTS</p>
+            <p>Free, high-quality local AI voices via Kokoro TTS</p>
         </header>
 
         <div class="server-status disconnected" id="serverStatus">
@@ -717,7 +717,7 @@
 
         <div class="card">
             <div class="textarea-wrapper">
-                <textarea id="textInput" placeholder="Enter text to convert to speech... Paste long texts like novels — they'll be auto-split into batches.">Hello! This is a demonstration of Microsoft's neural text-to-speech technology. These voices sound incredibly natural and support multiple languages, accents, and speaking styles. The best part? It's completely free with no API key required!</textarea>
+                <textarea id="textInput" placeholder="Enter text to convert to speech... Paste long texts like novels — they'll be auto-split into batches.">Hello! This is a demonstration of Kokoro's neural text-to-speech technology. These voices are generated locally on your machine with natural prosody and intonation. The best part? It's completely free, open source, and works offline!</textarea>
                 <div class="char-count"><span id="charCount">0 chars</span></div>
             </div>
         </div>
@@ -732,15 +732,11 @@
                 <button class="category-btn active" data-lang="en">English</button>
                 <button class="category-btn" data-lang="es">Spanish</button>
                 <button class="category-btn" data-lang="fr">French</button>
-                <button class="category-btn" data-lang="de">German</button>
+                <button class="category-btn" data-lang="ja">Japanese</button>
+                <button class="category-btn" data-lang="zh">Chinese</button>
+                <button class="category-btn" data-lang="hi">Hindi</button>
                 <button class="category-btn" data-lang="it">Italian</button>
                 <button class="category-btn" data-lang="pt">Portuguese</button>
-                <button class="category-btn" data-lang="zh">Chinese</button>
-                <button class="category-btn" data-lang="ja">Japanese</button>
-                <button class="category-btn" data-lang="ko">Korean</button>
-                <button class="category-btn" data-lang="ar">Arabic</button>
-                <button class="category-btn" data-lang="hi">Hindi</button>
-                <button class="category-btn" data-lang="ru">Russian</button>
                 <button class="category-btn" data-lang="all">All</button>
             </div>
 
@@ -753,13 +749,8 @@
                 </div>
 
                 <div class="control-group">
-                    <label for="rateRange">Speed <span id="rateValue">+0%</span></label>
-                    <input type="range" id="rateRange" min="-50" max="100" step="10" value="0">
-                </div>
-
-                <div class="control-group">
-                    <label for="pitchRange">Pitch <span id="pitchValue">-10Hz</span></label>
-                    <input type="range" id="pitchRange" min="-50" max="50" step="5" value="-10">
+                    <label for="speedRange">Speed <span id="speedValue">1.0x</span></label>
+                    <input type="range" id="speedRange" min="0.5" max="2.0" step="0.1" value="1.0">
                 </div>
             </div>
 
@@ -808,7 +799,7 @@
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg>
-                    Download MP3
+                    Download Audio
                 </button>
                 <button class="btn-secondary" id="addToQueueBtn" disabled>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -842,10 +833,10 @@
                     <div class="concurrency-control">
                         Parallel:
                         <select id="concurrencySelect">
-                            <option value="2">2</option>
-                            <option value="3" selected>3</option>
+                            <option value="1">1</option>
+                            <option value="2" selected>2</option>
+                            <option value="3">3</option>
                             <option value="5">5</option>
-                            <option value="10">10</option>
                         </select>
                     </div>
                     <button class="btn-sm btn-sm-primary" id="processAllBtn" disabled>Process All</button>
@@ -864,7 +855,7 @@
         </div>
 
         <footer>
-            <p>Powered by edge-tts - Microsoft's neural voices, free and unlimited</p>
+            <p>Powered by Kokoro TTS - High-quality local neural voices, free and open source</p>
         </footer>
     </div>
 
@@ -879,10 +870,8 @@
         const charCount = document.getElementById('charCount');
         const voiceSelect = document.getElementById('voiceSelect');
         const voiceCount = document.getElementById('voiceCount');
-        const rateRange = document.getElementById('rateRange');
-        const rateValue = document.getElementById('rateValue');
-        const pitchRange = document.getElementById('pitchRange');
-        const pitchValue = document.getElementById('pitchValue');
+        const speedRange = document.getElementById('speedRange');
+        const speedValue = document.getElementById('speedValue');
         const speakBtn = document.getElementById('speakBtn');
         const stopBtn = document.getElementById('stopBtn');
         const downloadBtn = document.getElementById('downloadBtn');
@@ -905,20 +894,18 @@
         let serverConnected = false;
 
         // Settings persistence
-        const SETTINGS_KEY = 'tts-settings';
+        const SETTINGS_KEY = 'tts-settings-kokoro';
         const DEFAULT_SETTINGS = {
-            voice: 'en-US-MichelleNeural',
-            rate: 0,
-            pitch: -10,
+            voice: 'af_heart',
+            speed: 1.0,
             lang: 'en',
-            concurrency: 3
+            concurrency: 2
         };
 
         function saveSettings() {
             const settings = {
                 voice: voiceSelect.value,
-                rate: parseInt(rateRange.value),
-                pitch: parseInt(pitchRange.value),
+                speed: parseFloat(speedRange.value),
                 lang: currentLang,
                 concurrency: parseInt(concurrencySelect.value)
             };
@@ -935,20 +922,11 @@
         }
 
         function applySettings(settings) {
-            // Apply rate
-            rateRange.value = settings.rate;
-            const rateVal = settings.rate;
-            rateValue.textContent = rateVal >= 0 ? `+${rateVal}%` : `${rateVal}%`;
+            speedRange.value = settings.speed;
+            speedValue.textContent = settings.speed.toFixed(1) + 'x';
 
-            // Apply pitch
-            pitchRange.value = settings.pitch;
-            const pitchVal = settings.pitch;
-            pitchValue.textContent = pitchVal >= 0 ? `+${pitchVal}Hz` : `${pitchVal}Hz`;
-
-            // Apply concurrency
             concurrencySelect.value = settings.concurrency;
 
-            // Apply language category
             currentLang = settings.lang;
             document.querySelectorAll('.category-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.lang === currentLang);
@@ -956,7 +934,6 @@
         }
 
         function applyVoiceSetting(settings) {
-            // Try to select the saved voice
             const options = Array.from(voiceSelect.options);
             const match = options.find(o => o.value === settings.voice);
             if (match) {
@@ -973,7 +950,6 @@
             await checkServerAndLoadVoices(settings);
         }
 
-        // Check server connection and load voices
         async function checkServerAndLoadVoices(settings) {
             settings = settings || loadSettings();
             try {
@@ -982,7 +958,7 @@
                     voices = await response.json();
                     serverConnected = true;
                     serverStatus.className = 'server-status connected';
-                    serverStatusText.textContent = `Server connected - ${voices.length} voices available`;
+                    serverStatusText.textContent = `Server connected - ${voices.length} Kokoro voices available`;
                     voiceCount.textContent = `${voices.length} voices`;
                     speakBtn.disabled = false;
                     addToQueueBtn.disabled = false;
@@ -1000,33 +976,31 @@
             }
         }
 
-        // Populate voices dropdown
+        const GRADE_ORDER = {'A': 0, 'A-': 1, 'B+': 2, 'B': 3, 'B-': 4, 'C+': 5, 'C': 6, 'C-': 7, 'D+': 8, 'D': 9, 'D-': 10, 'F+': 11, 'F': 12};
+
         function populateVoices(lang) {
             voiceSelect.innerHTML = '';
 
             let filteredVoices = voices;
             if (lang !== 'all') {
-                filteredVoices = voices.filter(v => v.Locale.toLowerCase().startsWith(lang));
+                filteredVoices = voices.filter(v => v.locale.toLowerCase().startsWith(lang));
             }
 
-            // Group by locale
             const grouped = {};
             filteredVoices.forEach(voice => {
-                const locale = voice.Locale;
-                if (!grouped[locale]) grouped[locale] = [];
-                grouped[locale].push(voice);
+                const key = voice.lang_name;
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(voice);
             });
 
-            // Sort and populate
-            Object.keys(grouped).sort().forEach(locale => {
+            Object.keys(grouped).sort().forEach(langName => {
                 const optgroup = document.createElement('optgroup');
-                optgroup.label = `${locale} (${grouped[locale].length})`;
+                optgroup.label = `${langName} (${grouped[langName].length})`;
 
-                grouped[locale].sort((a, b) => a.ShortName.localeCompare(b.ShortName)).forEach(voice => {
+                grouped[langName].sort((a, b) => (GRADE_ORDER[a.grade] || 99) - (GRADE_ORDER[b.grade] || 99)).forEach(voice => {
                     const option = document.createElement('option');
-                    option.value = voice.ShortName;
-                    const name = voice.ShortName.split('-').pop().replace('Neural', '');
-                    option.textContent = `${name} (${voice.Gender})`;
+                    option.value = voice.id;
+                    option.textContent = `${voice.name} (${voice.gender}) [${voice.grade}]`;
                     optgroup.appendChild(option);
                 });
 
@@ -1036,14 +1010,12 @@
             updateVoiceInfo();
         }
 
-        // Update voice info display
         function updateVoiceInfo() {
-            const voice = voices.find(v => v.ShortName === voiceSelect.value);
+            const voice = voices.find(v => v.id === voiceSelect.value);
             if (voice) {
-                const name = voice.ShortName.split('-').pop().replace('Neural', '');
-                voiceAvatar.textContent = name[0];
-                voiceName.textContent = name;
-                voiceLocale.textContent = `${voice.Locale} • ${voice.Gender} • Neural`;
+                voiceAvatar.textContent = voice.name[0];
+                voiceName.textContent = voice.name;
+                voiceLocale.textContent = `${voice.lang_name} • ${voice.gender} • Grade ${voice.grade}`;
             }
         }
 
@@ -1069,16 +1041,8 @@
             saveSettings();
         });
 
-        // Range inputs
-        rateRange.addEventListener('input', () => {
-            const val = parseInt(rateRange.value);
-            rateValue.textContent = val >= 0 ? `+${val}%` : `${val}%`;
-            saveSettings();
-        });
-
-        pitchRange.addEventListener('input', () => {
-            const val = parseInt(pitchRange.value);
-            pitchValue.textContent = val >= 0 ? `+${val}Hz` : `${val}Hz`;
+        speedRange.addEventListener('input', () => {
+            speedValue.textContent = parseFloat(speedRange.value).toFixed(1) + 'x';
             saveSettings();
         });
 
@@ -1122,8 +1086,7 @@
             updateUI('loading');
             hideError();
 
-            const rate = `${rateRange.value >= 0 ? '+' : ''}${rateRange.value}%`;
-            const pitch = `${pitchRange.value >= 0 ? '+' : ''}${pitchRange.value}Hz`;
+            const speed = parseFloat(speedRange.value);
 
             try {
                 const response = await fetch(`${API_BASE}/api/tts`, {
@@ -1132,8 +1095,7 @@
                     body: JSON.stringify({
                         text: text,
                         voice: voiceSelect.value,
-                        rate: rate,
-                        pitch: pitch
+                        speed: speed
                     })
                 });
 
@@ -1238,7 +1200,7 @@
                 const safeBatchLabel = batchLabel.replace('/', ' of ');
                 name += ` ${safeBatchLabel}`;
             }
-            return `${name}.mp3`;
+            return `${name}.wav`;
         }
 
         downloadBtn.addEventListener('click', () => {
@@ -1399,8 +1361,7 @@
                 return;
             }
 
-            const rate = `${rateRange.value >= 0 ? '+' : ''}${rateRange.value}%`;
-            const pitch = `${pitchRange.value >= 0 ? '+' : ''}${pitchRange.value}Hz`;
+            const speed = parseFloat(speedRange.value);
             const batches = splitTextIntoBatches(text);
 
             batches.forEach((batchText, i) => {
@@ -1408,8 +1369,7 @@
                     id: ++queueIdCounter,
                     text: batchText,
                     voice: voiceSelect.value,
-                    rate: rate,
-                    pitch: pitch,
+                    speed: speed,
                     status: 'pending',
                     audioBlob: null,
                     audioUrl: null,
@@ -1566,8 +1526,7 @@
                     body: JSON.stringify({
                         text: item.text,
                         voice: item.voice,
-                        rate: item.rate,
-                        pitch: item.pitch
+                        speed: item.speed
                     })
                 });
 
@@ -1617,7 +1576,8 @@
 
             queueList.innerHTML = queue.map(item => {
                 const preview = item.text.substring(0, 80) + (item.text.length > 80 ? '...' : '');
-                const voiceName = item.voice.split('-').pop().replace('Neural', '');
+                const voiceData = voices.find(v => v.id === item.voice);
+                const voiceLabel = voiceData ? voiceData.name : item.voice;
 
                 let statusHtml = '';
                 let actionsHtml = '';
@@ -1655,7 +1615,7 @@
                     <div class="queue-item ${item.status}">
                         <div class="queue-item-info">
                             <div class="queue-item-text">${escapeHtml(preview)}</div>
-                            <div class="queue-item-meta">${item.batchLabel ? `<strong>${escapeHtml(item.batchLabel)}</strong> &middot; ` : ''}${escapeHtml(voiceName)} &middot; ${item.text.length.toLocaleString()} chars</div>
+                            <div class="queue-item-meta">${item.batchLabel ? `<strong>${escapeHtml(item.batchLabel)}</strong> &middot; ` : ''}${escapeHtml(voiceLabel)} &middot; ${item.text.length.toLocaleString()} chars</div>
                             ${errorHtml}
                         </div>
                         ${statusHtml}
